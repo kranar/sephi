@@ -1,0 +1,62 @@
+#!/bin/bash
+exit_status=0
+source="${BASH_SOURCE[0]}"
+while [ -h "$source" ]; do
+  dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
+  source="$(readlink "$source")"
+  [[ $source != /* ]] && source="$dir/$source"
+done
+directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
+root=$(pwd -P)
+if [ "$(uname -s)" = "Darwin" ]; then
+  STAT='stat -x -t "%Y%m%d%H%M%S"'
+else
+  STAT='stat'
+fi
+if [ -f "cache_files/rover.txt" ]; then
+  pt="$($STAT $directory/setup.sh | grep Modify | awk '{print $2 $3}')"
+  mt="$($STAT cache_files/rover.txt | grep Modify | awk '{print $2 $3}')"
+  if [[ ! "$pt" > "$mt" ]]; then
+    exit 0
+  fi
+fi
+let cores="`grep -c "processor" < /proc/cpuinfo`"
+if [ ! -d "doctest-2.4.9" ]; then
+  wget https://github.com/doctest/doctest/archive/refs/tags/v2.4.9.zip --no-check-certificate
+  if [ "$?" == "0" ]; then
+    unzip v2.4.9.zip
+  else
+    exit_status=1
+  fi
+  rm -f v2.4.9.zip
+fi
+if [ ! -d "pybind11-2.10.3" ]; then
+  wget https://github.com/pybind/pybind11/archive/refs/tags/v2.10.3.zip -O pybind11-2.10.3.zip --no-check-certificate
+  if [ "$?" == "0" ]; then
+    unzip pybind11-2.10.3.zip
+  else
+    exit_status=1
+  fi
+  rm -f pybind11-2.10.3.zip
+fi
+if [ ! -d "Python-3.10.6" ]; then
+  wget https://www.python.org/ftp/python/3.10.6/Python-3.10.6.tgz --no-check-certificate
+  if [ "$?" == "0" ]; then
+    gzip -d -c Python-3.10.6.tgz | tar -xf -
+    pushd Python-3.10.6
+    export CFLAGS="-fPIC"
+    ./configure --prefix="$root/Python-3.10.6"
+    make -j $cores
+    make install
+    unset CFLAGS
+    popd
+  else
+    exit_status=1
+  fi
+  rm -rf Python-3.10.6.tgz
+fi
+if [ ! -d cache_files ]; then
+  mkdir cache_files
+fi
+echo timestamp > cache_files/rover.txt
+exit $exit_status

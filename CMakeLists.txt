@@ -1,9 +1,30 @@
-cmake_minimum_required(VERSION 3.20)
-project(Sephi)
-
-SET(CMAKE_BUILD_TYPE $ENV{SEPHI_BUILD_TYPE})
-
+cmake_minimum_required(VERSION 3.8)
+project(rover)
+set(D "${CMAKE_BINARY_DIR}/Dependencies" CACHE STRING
+  "Path to dependencies folder.")
+file(TO_NATIVE_PATH "${D}" D)
+set(DEFAULT_BUILD_TYPE "Release")
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}" CACHE
+    STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+if(WIN32)
+  execute_process(COMMAND cmd /c
+    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+elseif(UNIX)
+  execute_process(COMMAND "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
+    "${CMAKE_BUILD_TYPE}" WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+endif()
+include(Config/dependencies.cmake)
+include_directories(${ROVER_INCLUDE_PATH})
+set(TEST_INSTALL_DIRECTORY "${PROJECT_BINARY_DIR}/Tests")
+set(LIB_INSTALL_DIRECTORY "${PROJECT_BINARY_DIR}/Libraries")
 if(MSVC)
+  set(CMAKE_GENERATOR_PLATFORM Win32 CACHE INTERNAL "Force 32-bit compilation")
+  set(CMAKE_LIBRARY_FLAGS "/LTCG")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX /bigobj /std:c++20")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GL")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO")
@@ -18,22 +39,28 @@ if(MSVC)
 endif()
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR
     ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=gnu++20")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++20")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_RELEASE} -O2 -DNDEBUG")
+  if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsized-deallocation")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_RELEASE} -fsized-deallocation")
+  endif()
 endif()
 if(CYGWIN)
   add_definitions(-D__USE_W32_SOCKETS)
 endif()
-if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_RELEASE} -pthreads")
 endif()
-
-file(GLOB header_files *.hpp)
-file(GLOB source_files *.cpp)
-
+file(GLOB rover_header_files ${ROVER_INCLUDE_PATH}/Rover/*.hpp)
+source_group("Rover" FILES ${rover_header_files})
+file(GLOB header_files ${rover_header_files})
 if(MSVC)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
-
-add_executable(Sephi ${header_files} ${source_files})
+add_library(rover ${header_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
+set_target_properties(rover PROPERTIES STATIC_LIBRARY_FLAGS_RELEASE
+  "${CMAKE_LIBRARY_FLAGS}" LINKER_LANGUAGE CXX OUTPUT_NAME rover)
+add_subdirectory(Config/Python)
+add_subdirectory(Config/Tests)
