@@ -53,6 +53,15 @@ IF NOT EXIST Python-3.11.1 (
   )
   DEL /F /Q Python-3.11.1.tgz
 )
+IF NOT EXIST eigen-3.4.0 (
+  wget https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz --no-check-certificate
+  IF !ERRORLEVEL! LEQ 0 (
+    gzip -d -c eigen-3.4.0.tar.gz | tar -xf -
+  ) ELSE (
+    SET EXIT_STATUS=1
+  )
+  DEL /F /Q eigen-3.4.0.tar.gz
+)
 IF NOT EXIST cache_files (
   MD cache_files
 )

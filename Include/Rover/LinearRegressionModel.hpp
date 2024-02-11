@@ -1,6 +1,6 @@
 #ifndef ROVER_LINEAR_REGRESSION_MODEL_HPP
 #define ROVER_LINEAR_REGRESSION_MODEL_HPP
-#include <vector>
+#include <Eigen/Dense>
 
 namespace Rover {
 
@@ -15,14 +15,17 @@ namespace Rover {
       /** The type of scalar to use. */
       using Scalar = S;
 
+      /** The type used for the vector of parameters or regressors. */
+      using Vector = Eigen::Vector<Scalar, Eigen::Dynamic>;
+
       /**
        * Constructs a LinearRegressionModel.
        * @param parameters The parameters to the linear regression model.
        */
-      explicit LinearRegressionModel(std::vector<Scalar> parameters);
+      explicit LinearRegressionModel(Vector parameters);
 
       /** Returns this model's parameters. */
-      const std::vector<Scalar>& get_parameters() const;
+      const Vector& get_parameters() const;
 
       /**
        * Evaluates this model on a list of regressors.
@@ -30,31 +33,27 @@ namespace Rover {
        * @return The evaluation of this model to the specified
        *         <i>regressor</i>s.
        */
-      Scalar evaluate(const std::vector<Scalar>& regressors) const;
+      Scalar evaluate(const Vector& regressors) const;
 
     private:
-      std::vector<Scalar> m_parameters;
+      Vector m_parameters;
   };
 
   template<typename S>
-  LinearRegressionModel<S>::LinearRegressionModel(
-    std::vector<Scalar> parameters)
+  LinearRegressionModel<S>::LinearRegressionModel(Vector parameters)
     : m_parameters(std::move(parameters)) {}
 
   template<typename S>
-  const std::vector<typename LinearRegressionModel<S>::Scalar>&
+  const typename LinearRegressionModel<S>::Vector&
       LinearRegressionModel<S>::get_parameters() const {
     return m_parameters;
   }
 
   template<typename S>
-  LinearRegressionModel<S>::Scalar LinearRegressionModel<S>::evaluate(
-      const std::vector<Scalar>& regressors) const {
-    auto result = m_parameters[0];
-    for(auto i = std::size_t(0); i < regressors.size(); ++i) {
-      result += m_parameters[i + 1] * regressors[i];
-    }
-    return result;
+  LinearRegressionModel<S>::Scalar
+      LinearRegressionModel<S>::evaluate(const Vector& regressors) const {
+    return m_parameters.head(m_parameters.size() - 1).dot(regressors) +
+      m_parameters(m_parameters.size() - 1);
   }
 }
 
