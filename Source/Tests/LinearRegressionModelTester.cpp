@@ -29,4 +29,13 @@ TEST_SUITE("LinearRegressionModel") {
       CHECK(result == doctest::Approx(3.0f));
     }
   }
+
+  TEST_CASE("train") {
+    auto sample = MatrixXf(2, 2);
+    sample << 1, 1, 2, 2;
+    auto model = train(sample);
+    auto regressors = VectorXf(1);
+    regressors << 5.0f;
+    auto result = model.evaluate(regressors);
+  }
 }

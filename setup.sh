@@ -55,6 +55,15 @@ if [ ! -d "Python-3.10.6" ]; then
   fi
   rm -rf Python-3.10.6.tgz
 fi
+if [ ! -d "eigen-3.4.0" ]; then
+  wget https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz --no-check-certificate
+  if [ "$?" == "0" ]; then
+    gzip -d -c eigen-3.4.0.tar.gz | tar -xf -
+  else
+    exit_status=1
+  fi
+  rm -rf eigen-3.4.0.tar.gz
+fi
 if [ ! -d cache_files ]; then
   mkdir cache_files
 fi
