@@ -26,16 +26,27 @@ TEST_SUITE("LinearRegressionModel") {
       auto regressors = VectorXf(1);
       regressors << 0.0f;
       auto result = model.evaluate(regressors);
-      CHECK(result == doctest::Approx(3.0f));
+      CHECK(result == doctest::Approx(2.0f));
     }
   }
 
-  TEST_CASE("train") {
-    auto sample = MatrixXf(2, 2);
-    sample << 1, 1, 2, 2;
+  TEST_CASE("train_zero_intercept") {
+    auto sample = MatrixXf(3, 2);
+    sample << 1, 1, 2, 2, 3, 3;
     auto model = train(sample);
     auto regressors = VectorXf(1);
     regressors << 5.0f;
     auto result = model.evaluate(regressors);
+    CHECK(result == doctest::Approx(5.0f));
+  }
+
+  TEST_CASE("train_with_intercept") {
+    auto sample = MatrixXf(3, 2);
+    sample << 3, 4, 4, 5, 5, 6;
+    auto model = train(sample);
+    auto regressors = VectorXf(1);
+    regressors << 9.0f;
+    auto result = model.evaluate(regressors);
+    CHECK(result == doctest::Approx(10.0f));
   }
 }

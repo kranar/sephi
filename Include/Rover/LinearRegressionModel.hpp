@@ -70,8 +70,8 @@ namespace Rover {
   template<typename S>
   LinearRegressionModel<S>::Scalar
       LinearRegressionModel<S>::evaluate(const Vector& regressors) const {
-    return m_parameters.head(m_parameters.size() - 1).dot(regressors) +
-      m_parameters(m_parameters.size() - 1);
+    return m_parameters(0) +
+      m_parameters.tail(m_parameters.size() - 1).dot(regressors);
   }
 }
 
