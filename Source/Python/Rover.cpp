@@ -6,5 +6,5 @@ using namespace pybind11;
 using namespace Rover;
 
 PYBIND11_MODULE(rover, m) {
-  export_linear_regression_model<double>(m, "LinearRegressionModel");
+  export_linear_regression_model<double>(m, "");
 }
